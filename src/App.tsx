@@ -1,14 +1,28 @@
 import React from "react";
-import { Box, AppBar, ThemeProvider } from "@mui/material";
-import { pageTheme } from "./assets/PageTheme";
+import { Box, ThemeProvider, createTheme, Grid } from "@mui/material";
+import { Header, Playlist, AudioPlayer } from "./components";
+import CssBaseline from '@mui/material/CssBaseline';
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
 
 function App() {
   return (
-    <ThemeProvider theme={pageTheme}>
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
       <Box>
-        <AppBar sx={{ p: 2 }}>
-          <h1>Audio Player for Streamed Content</h1>
-        </AppBar>
+        <Header></Header>
+        <Grid container spacing={2}>
+          <Grid>
+            <Playlist></Playlist>
+          </Grid>
+          <Grid>
+            <AudioPlayer></AudioPlayer>
+          </Grid>
+        </Grid>
       </Box>
     </ThemeProvider>
   );
