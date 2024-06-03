@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, ThemeProvider, createTheme, Grid } from "@mui/material";
+import { Box, ThemeProvider, createTheme, Grid, Paper, makeStyles } from "@mui/material";
+
 import { Header, Playlist, AudioPlayer } from "./components";
 import CssBaseline from '@mui/material/CssBaseline';
 
@@ -15,12 +16,16 @@ function App() {
       <CssBaseline />
       <Box>
         <Header></Header>
-        <Grid container spacing={2}>
-          <Grid>
-            <Playlist></Playlist>
+        <Grid container>
+          <Grid xs={6}>
+            <Paper elevation={5} sx={{m: 4, pt: 2, height:"85vh", maxHeight: "85vh", overflow: "auto"}}>
+              <Playlist></Playlist>
+            </Paper>  
           </Grid>
-          <Grid>
-            <AudioPlayer></AudioPlayer>
+          <Grid xs={6}>
+            <Paper elevation={5} sx={{m: 4, pt: 2, height:"85vh", maxHeight: "85vh", overflow: "auto"}}>
+              <AudioPlayer></AudioPlayer>
+            </Paper>            
           </Grid>
         </Grid>
       </Box>
