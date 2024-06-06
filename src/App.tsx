@@ -11,10 +11,10 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const [links, setLinks] = React.useState(new Array<string>());
+  const [link, setLink] = React.useState<string | undefined>();
 
   function handleData(linkFromChild: string) {
-    setLinks([...links, linkFromChild]);
+    setLink(linkFromChild);
   }
 
   return (
@@ -28,14 +28,13 @@ function App() {
               elevation={5}
               sx={{
                 m: 4,
-                pt: 2,
                 height: "85vh",
                 maxHeight: "85vh",
                 overflow: "auto",
                 overflowX: "hidden",
               }}
             >
-              <Playlist links={links}></Playlist>
+              <Playlist link={link}></Playlist>
             </Paper>
           </Grid>
           <Grid xs={6}>
