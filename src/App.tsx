@@ -1,7 +1,8 @@
 import React from "react";
 import { Box, ThemeProvider, createTheme, Grid, Paper } from "@mui/material";
-import { Header, Playlist, AudioPlayer, AddButton } from "./components";
+import { Header, Playlist, AudioPlayer, AddButton, KeyedLink } from "./components";
 import CssBaseline from "@mui/material/CssBaseline";
+import { v4 as uuidv4 } from 'uuid';
 
 const darkTheme = createTheme({
   palette: {
@@ -10,14 +11,22 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const [links, setLinks] = React.useState(new Array<string>());
+  const [links, setLinks] = React.useState(new Array<KeyedLink>());
 
   function handleData(linkFromChild: string) {
-    setLinks((links) => [...links, linkFromChild]);
+    setLinks((links) => [...links, { link: linkFromChild, id: uuidv4() }]);
   }
 
   function handleDelete(linkToDelete: string) {
-    setLinks((links) => links.filter((link) => link !== linkToDelete));
+    setLinks((links) => links.filter((link) => link.link !== linkToDelete));
+  }
+
+  function handleReorder(source: number, destination: number) {
+    const newLinks = Array.from(links);
+    const keyedLink = newLinks[source];
+    newLinks.splice(source, 1);
+    newLinks.splice(destination, 0, { link: keyedLink.link, id: keyedLink.id }); // make copy
+    setLinks(newLinks);
   }
 
   return (
@@ -37,7 +46,7 @@ function App() {
                 overflowX: "hidden",
               }}
             >
-              <Playlist links={links} deleteHandler={handleDelete}></Playlist>
+              <Playlist links={links} deleteHandler={handleDelete} reorderingHandler={handleReorder}></Playlist>
             </Paper>
           </Grid>
           <Grid xs={6}>
@@ -56,7 +65,7 @@ function App() {
             </Paper>
           </Grid>
         </Grid>
-        <AddButton links={links} dataHandler={handleData}></AddButton>
+        <AddButton links={links.map(link => link.link)} dataHandler={handleData}></AddButton>
       </Box>
     </ThemeProvider>
   );
