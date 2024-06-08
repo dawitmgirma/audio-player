@@ -2,14 +2,15 @@ import React from "react";
 import { Fab, Fade, Popper, TextField } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
-type handlerFunction = (link: string) => void;
 type AddButtonProps = {
-  dataHandler: handlerFunction;
+  links: Array<string>;
+  dataHandler: (link: string) => void;
 };
 
-function AddButton({ dataHandler }: AddButtonProps) {
+function AddButton({ links, dataHandler }: AddButtonProps) {
   const [anchor, setAnchor] = React.useState<null | HTMLElement>(null);
   const [link, setLink] = React.useState("");
+  const [error, setError] = React.useState(false);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchor(anchor ? null : event.currentTarget);
@@ -17,8 +18,10 @@ function AddButton({ dataHandler }: AddButtonProps) {
 
   const handleSubmit = (event: React.FormEvent<HTMLElement>) => {
     event.preventDefault();
-    document.getElementById("addButton")?.click();
-    dataHandler(link);
+    if (!error) {
+      document.getElementById("addButton")?.click();
+      dataHandler(link);
+    }
   };
 
   const open = Boolean(anchor);
@@ -48,13 +51,19 @@ function AddButton({ dataHandler }: AddButtonProps) {
       >
         {({ TransitionProps }) => (
           <Fade {...TransitionProps}>
-            <form onSubmit={handleSubmit}>
-              <TextField
+            <form noValidate onSubmit={handleSubmit}>
+              <TextField required
                 sx={{ width: "42.25vw" }}
                 id="filled-basic"
                 label="Add link to playlist"
                 variant="filled"
-                onChange={(e) => setLink(e.target.value)}
+                onChange={(e) => {
+                  const linkExcerpt = e.target.value;
+                  setError(links.includes(linkExcerpt));
+                  return setLink(linkExcerpt);
+                }}
+                error={error}
+                helperText={error ? "Link is already in playlist": ""}
               />
             </form>
           </Fade>

@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, ThemeProvider, createTheme, Grid, Paper } from "@mui/material";
-
 import { Header, Playlist, AudioPlayer, AddButton } from "./components";
 import CssBaseline from "@mui/material/CssBaseline";
 
@@ -11,10 +10,14 @@ const darkTheme = createTheme({
 });
 
 function App() {
-  const [link, setLink] = React.useState<string | undefined>();
+  const [links, setLinks] = React.useState(new Array<string>());
 
   function handleData(linkFromChild: string) {
-    setLink(linkFromChild);
+    setLinks((links) => [...links, linkFromChild]);
+  }
+
+  function handleDelete(linkToDelete: string) {
+    setLinks((links) => links.filter((link) => link !== linkToDelete));
   }
 
   return (
@@ -34,7 +37,7 @@ function App() {
                 overflowX: "hidden",
               }}
             >
-              <Playlist link={link}></Playlist>
+              <Playlist links={links} deleteHandler={handleDelete}></Playlist>
             </Paper>
           </Grid>
           <Grid xs={6}>
@@ -53,7 +56,7 @@ function App() {
             </Paper>
           </Grid>
         </Grid>
-        <AddButton dataHandler={handleData}></AddButton>
+        <AddButton links={links} dataHandler={handleData}></AddButton>
       </Box>
     </ThemeProvider>
   );
