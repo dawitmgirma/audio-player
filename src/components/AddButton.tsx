@@ -52,7 +52,8 @@ function AddButton({ links, dataHandler }: AddButtonProps) {
         {({ TransitionProps }) => (
           <Fade {...TransitionProps}>
             <form noValidate onSubmit={handleSubmit}>
-              <TextField required
+              <TextField
+                required
                 sx={{ width: "42.25vw" }}
                 id="filled-basic"
                 label="Add link to playlist"
@@ -63,7 +64,7 @@ function AddButton({ links, dataHandler }: AddButtonProps) {
                   return setLink(linkExcerpt);
                 }}
                 error={error}
-                helperText={error ? "Link is already in playlist": ""}
+                helperText={error ? "Link is already in playlist" : ""}
               />
             </form>
           </Fade>

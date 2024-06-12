@@ -1,13 +1,25 @@
 import React from "react";
-import { IconButton, List, ListItem, ListItemIcon, ListItemText, Paper } from "@mui/material";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import ClearIcon from '@mui/icons-material/Clear';
+import {
+  IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+} from "@mui/material";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "@hello-pangea/dnd";
+import { DragIndicator, Clear } from "@mui/icons-material";
+// import ClearIcon from "@mui/icons-material/Clear";
 
 export type KeyedLink = {
   link: string;
   id: string;
-}
+};
 
 type PlaylistProps = {
   links: Array<KeyedLink>;
@@ -21,10 +33,13 @@ function Playlist({ links, deleteHandler, reorderingHandler }: PlaylistProps) {
 
     if (!destination) return;
 
-    if (destination.droppableId === source.droppableId && 
-        destination.index === source.index) return; // dropped in same place
-    
-    reorderingHandler(source.index, destination.index);    
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    )
+      return; // dropped in same place
+
+    reorderingHandler(source.index, destination.index);
   }
 
   return (
@@ -36,21 +51,30 @@ function Playlist({ links, deleteHandler, reorderingHandler }: PlaylistProps) {
               {links.map((link, index) => (
                 <Draggable draggableId={link.id} index={index} key={link.id}>
                   {(provided) => (
-                    <div                       
+                    <div
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                       ref={provided.innerRef}
                     >
                       <Paper sx={{ mt: 1 }}>
-                        <ListItem secondaryAction={
-                          <IconButton edge="end" aria-label="delete" onClick={(event) => deleteHandler(link.link)}>
-                            <ClearIcon />
-                          </IconButton>
-                        }>
+                        <ListItem
+                          secondaryAction={
+                            <IconButton
+                              edge="end"
+                              aria-label="delete"
+                              onClick={(event) => deleteHandler(link.link)}
+                            >
+                              <Clear />
+                            </IconButton>
+                          }
+                        >
                           <ListItemIcon>
-                            <DragIndicatorIcon fontSize="large"/>
+                            <DragIndicator fontSize="large" />
                           </ListItemIcon>
-                          <ListItemText primary={link.link} primaryTypographyProps={{ fontSize: '25px' }} ></ListItemText>
+                          <ListItemText
+                            primary={link.link}
+                            primaryTypographyProps={{ fontSize: "25px" }}
+                          ></ListItemText>
                         </ListItem>
                       </Paper>
                     </div>

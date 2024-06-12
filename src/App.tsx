@@ -1,8 +1,14 @@
 import React from "react";
 import { Box, ThemeProvider, createTheme, Grid, Paper } from "@mui/material";
-import { Header, Playlist, AudioPlayer, AddButton, KeyedLink } from "./components";
+import {
+  Header,
+  Playlist,
+  AudioPlayer,
+  AddButton,
+  KeyedLink,
+} from "./components";
 import CssBaseline from "@mui/material/CssBaseline";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 const darkTheme = createTheme({
   palette: {
@@ -12,13 +18,21 @@ const darkTheme = createTheme({
 
 function App() {
   const [links, setLinks] = React.useState(new Array<KeyedLink>());
+  const [selectedLink, setSelectedLink] = React.useState<string | undefined>(
+    links[0]?.link,
+  );
 
   function handleData(linkFromChild: string) {
     setLinks((links) => [...links, { link: linkFromChild, id: uuidv4() }]);
+    if (!selectedLink) setSelectedLink(linkFromChild);
   }
 
   function handleDelete(linkToDelete: string) {
-    setLinks((links) => links.filter((link) => link.link !== linkToDelete));
+    setLinks((links) => {
+      const newLinks = links.filter((link) => link.link !== linkToDelete);
+      if (selectedLink === linkToDelete) setSelectedLink(newLinks[0]?.link);
+      return newLinks;
+    });
   }
 
   function handleReorder(source: number, destination: number) {
@@ -46,7 +60,11 @@ function App() {
                 overflowX: "hidden",
               }}
             >
-              <Playlist links={links} deleteHandler={handleDelete} reorderingHandler={handleReorder}></Playlist>
+              <Playlist
+                links={links}
+                deleteHandler={handleDelete}
+                reorderingHandler={handleReorder}
+              ></Playlist>
             </Paper>
           </Grid>
           <Grid xs={6}>
@@ -54,18 +72,20 @@ function App() {
               elevation={5}
               sx={{
                 m: 4,
-                pt: 2,
                 height: "85vh",
                 maxHeight: "85vh",
                 overflow: "auto",
                 overflowX: "hidden",
               }}
             >
-              <AudioPlayer></AudioPlayer>
+              <AudioPlayer selectedLink={selectedLink}></AudioPlayer>
             </Paper>
           </Grid>
         </Grid>
-        <AddButton links={links.map(link => link.link)} dataHandler={handleData}></AddButton>
+        <AddButton
+          links={links.map((link) => link.link)}
+          dataHandler={handleData}
+        ></AddButton>
       </Box>
     </ThemeProvider>
   );
