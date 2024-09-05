@@ -8,16 +8,16 @@ import {
   IconButton,
   Stack,
 } from "@mui/material";
-import MusicOffIcon from "@mui/icons-material/MusicOff";
 import {
-  FastForwardRounded,
-  FastRewindRounded,
   PauseRounded,
   PlayArrowRounded,
   SkipPrevious,
   SkipNext,
   VolumeDownRounded,
-  VolumeUpRounded
+  VolumeUpRounded,
+  MusicOff,
+  Replay10,
+  Forward10,
 } from "@mui/icons-material";
 
 type AudioPlayerProps = {
@@ -25,7 +25,20 @@ type AudioPlayerProps = {
 };
 
 function AudioPlayer({ selectedLink }: AudioPlayerProps) {
-  const [paused, setPaused] = React.useState(true);
+  const audioPlayerId = "audio-player";
+  const [paused, setPaused] = React.useState(!!!selectedLink);
+  const [position, setPosition] = React.useState<number | undefined>(undefined);
+  const [endTime, setEndTime] = React.useState<number | undefined>(undefined);
+
+  function formatDuration(time: number | undefined): string {
+    if (time === undefined) return "--:--";
+
+    const dateObj = new Date(time * 1000);
+    const hours = dateObj.getUTCHours();
+    const timeString = dateObj.toUTCString().split(' ')[4];
+    
+    return hours ? timeString : timeString.substring(timeString.indexOf(":") + 1);
+  }
 
   return (
     <>
@@ -38,10 +51,20 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             alignItems: "center",
             justifyContent: "center",
           }}
-          src={selectedLink}
         >
           {selectedLink ? (
-            <audio controls autoPlay src={selectedLink}></audio>
+            <audio
+              controls
+              autoPlay
+              id={audioPlayerId}
+              src={selectedLink}
+              onPlay={() => setPaused(false)}
+              onPause={() => setPaused(true)}
+              onDurationChange={(event) => {
+                setPosition(0);
+                setEndTime(event.currentTarget.duration);
+              }}
+            ></audio>
           ) : (
             <div
               style={{
@@ -53,7 +76,7 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
                 fontSize: "75px",
               }}
             >
-              <MusicOffIcon fontSize="inherit" />
+              <MusicOff fontSize="inherit" />
               <Typography variant="h4">Add a link to play.</Typography>
             </div>
           )}
@@ -70,7 +93,7 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
         <Slider
           size="small"
           valueLabelDisplay="off"
-          sx={{ width: "60%", mt: 5}}
+          sx={{ width: "60%", mt: 5 }}
         />
         <Box
           sx={{
@@ -81,8 +104,8 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             mt: -1,
           }}
         >
-          <Typography fontSize="0.75rem">--:--</Typography>
-          <Typography fontSize="0.75rem">--:--</Typography>
+          <Typography fontSize="0.75rem">{formatDuration(position)}</Typography>
+          <Typography fontSize="0.75rem">{formatDuration(endTime)}</Typography>
         </Box>
         <Box
           sx={{
@@ -96,9 +119,23 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             <SkipPrevious sx={{ fontSize: "60px" }} />
           </IconButton>
           <IconButton>
-            <FastRewindRounded sx={{ fontSize: "60px" }} />
+            <Replay10 sx={{ fontSize: "40px" }} />
           </IconButton>
-          <IconButton onClick={() => setPaused(!paused)}>
+          <IconButton
+            onClick={() => {
+              if (!selectedLink) return;
+
+              const audioPlayer: HTMLAudioElement = document.getElementById(
+                audioPlayerId,
+              ) as HTMLAudioElement;
+
+              if (paused) {
+                audioPlayer.play();
+              } else {
+                audioPlayer.pause();
+              }
+            }}
+          >
             {paused ? (
               <PlayArrowRounded sx={{ fontSize: "75px" }} />
             ) : (
@@ -106,17 +143,20 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             )}
           </IconButton>
           <IconButton>
-            <FastForwardRounded sx={{ fontSize: "60px" }} />
+            <Forward10 sx={{ fontSize: "40px" }} />
           </IconButton>
           <IconButton>
             <SkipNext sx={{ fontSize: "60px" }} />
           </IconButton>
         </Box>
-        <Stack spacing={2} direction="row" sx={{ mt: 3, px: 1, width: "50%" }} alignItems="center">
+        <Stack
+          spacing={2}
+          direction="row"
+          sx={{ mt: 3, px: 1, width: "50%" }}
+          alignItems="center"
+        >
           <VolumeDownRounded />
-          <Slider
-            defaultValue={30}
-          />
+          <Slider defaultValue={30} />
           <VolumeUpRounded />
         </Stack>
       </Box>
