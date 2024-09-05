@@ -64,6 +64,7 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
                 setPosition(0);
                 setEndTime(event.currentTarget.duration);
               }}
+              onTimeUpdate={event => setPosition(event.currentTarget.currentTime)}
             ></audio>
           ) : (
             <div
@@ -93,7 +94,19 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
         <Slider
           size="small"
           valueLabelDisplay="off"
+          value={position}
+          onChange={(_, value) => {
+            const newPos = value as number; // will never have array since it is not ranged slider
+            setPosition(newPos);
+            const audioPlayer: HTMLAudioElement = document.getElementById(
+              audioPlayerId,
+            ) as HTMLAudioElement;
+
+            audioPlayer.currentTime = newPos;
+          }} 
           sx={{ width: "60%", mt: 5 }}
+          disabled={[position, endTime].includes(undefined)}
+          max={endTime}
         />
         <Box
           sx={{
