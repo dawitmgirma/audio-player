@@ -15,6 +15,7 @@ import {
   SkipNext,
   VolumeDownRounded,
   VolumeUpRounded,
+  VolumeOff,
   MusicOff,
   Replay10,
   Forward10,
@@ -27,9 +28,12 @@ type AudioPlayerProps = {
 function AudioPlayer({ selectedLink }: AudioPlayerProps) {
   const audioPlayerId = "audio-player";
   const [paused, setPaused] = React.useState(!!!selectedLink);
+  const [muted, setMuted] = React.useState(false);
   const [position, setPosition] = React.useState<number | undefined>(undefined);
   const [endTime, setEndTime] = React.useState<number | undefined>(undefined);
+  const [volume, setVolume] = React.useState<number | undefined>(undefined);
 
+  // returns time into string duration for slider
   function formatDuration(time: number | undefined): string {
     if (time === undefined) return "--:--";
 
@@ -38,6 +42,15 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
     const timeString = dateObj.toUTCString().split(' ')[4];
     
     return hours ? timeString : timeString.substring(timeString.indexOf(":") + 1);
+  }
+
+  // returns audio player given html id
+  function fetchAudioPlayer(audioPlayerId: string): HTMLAudioElement {
+    const audioPlayer: HTMLAudioElement = document.getElementById(
+      audioPlayerId,
+    ) as HTMLAudioElement;
+
+    return audioPlayer;
   }
 
   return (
@@ -60,9 +73,13 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
               src={selectedLink}
               onPlay={() => setPaused(false)}
               onPause={() => setPaused(true)}
+              onVolumeChange={(event) => {
+                setMuted(!event.currentTarget.volume ? true : event.currentTarget.muted);
+              }}
               onDurationChange={(event) => {
                 setPosition(0);
                 setEndTime(event.currentTarget.duration);
+                setVolume(event.currentTarget.volume);
               }}
               onTimeUpdate={event => setPosition(event.currentTarget.currentTime)}
             ></audio>
@@ -94,15 +111,12 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
         <Slider
           size="small"
           valueLabelDisplay="off"
-          value={position}
+          value={position ?? 0}
           onChange={(_, value) => {
             const newPos = value as number; // will never have array since it is not ranged slider
             setPosition(newPos);
-            const audioPlayer: HTMLAudioElement = document.getElementById(
-              audioPlayerId,
-            ) as HTMLAudioElement;
 
-            audioPlayer.currentTime = newPos;
+            fetchAudioPlayer(audioPlayerId).currentTime = newPos;
           }} 
           sx={{ width: "60%", mt: 5 }}
           disabled={[position, endTime].includes(undefined)}
@@ -131,16 +145,16 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
           <IconButton>
             <SkipPrevious sx={{ fontSize: "60px" }} />
           </IconButton>
-          <IconButton>
+          <IconButton
+            onClick={() => fetchAudioPlayer(audioPlayerId).currentTime -= 10}
+          >
             <Replay10 sx={{ fontSize: "40px" }} />
           </IconButton>
           <IconButton
             onClick={() => {
               if (!selectedLink) return;
 
-              const audioPlayer: HTMLAudioElement = document.getElementById(
-                audioPlayerId,
-              ) as HTMLAudioElement;
+              const audioPlayer = fetchAudioPlayer(audioPlayerId);
 
               if (paused) {
                 audioPlayer.play();
@@ -155,7 +169,9 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
               <PauseRounded sx={{ fontSize: "75px" }} />
             )}
           </IconButton>
-          <IconButton>
+          <IconButton
+            onClick={() => fetchAudioPlayer(audioPlayerId).currentTime += 10}
+          >
             <Forward10 sx={{ fontSize: "40px" }} />
           </IconButton>
           <IconButton>
@@ -168,8 +184,24 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
           sx={{ mt: 3, px: 1, width: "50%" }}
           alignItems="center"
         >
-          <VolumeDownRounded />
-          <Slider defaultValue={30} />
+          <IconButton
+            onClick={() => {
+              fetchAudioPlayer(audioPlayerId).muted = !fetchAudioPlayer(audioPlayerId).muted;
+            }}
+          >
+            {muted ? <VolumeOff /> : <VolumeDownRounded />}
+          </IconButton>
+          <Slider 
+            value={volume && !muted ? volume: 0}
+            onChange={(_, value) => {
+              const newVolume = value as number; // will never have array since it is not ranged slider
+              setVolume(newVolume);
+              fetchAudioPlayer(audioPlayerId).volume = newVolume;
+            }}
+            disabled={volume === undefined}
+            max={1}
+            step={0.01}
+          />
           <VolumeUpRounded />
         </Stack>
       </Box>
