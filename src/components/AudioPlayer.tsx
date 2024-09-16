@@ -7,6 +7,9 @@ import {
   Slider,
   IconButton,
   Stack,
+  FormControl,
+  Select,
+  MenuItem
 } from "@mui/material";
 import {
   PauseRounded,
@@ -19,10 +22,24 @@ import {
   MusicOff,
   Replay10,
   Forward10,
+  SlowMotionVideo,
+  Shuffle,
+  ShuffleOn,
+  Repeat,
+  RepeatOn,
+  RepeatOneOn,
 } from "@mui/icons-material";
+
+import PlaybackSpeedButton from "./PlaybackSpeedButton";
 
 type AudioPlayerProps = {
   selectedLink: string | undefined;
+};
+
+enum RepeatState {
+  Off = 0,
+  On,
+  OnSame,
 };
 
 function AudioPlayer({ selectedLink }: AudioPlayerProps) {
@@ -32,6 +49,8 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
   const [position, setPosition] = React.useState<number | undefined>(undefined);
   const [endTime, setEndTime] = React.useState<number | undefined>(undefined);
   const [volume, setVolume] = React.useState<number | undefined>(undefined);
+  const [shuffle, setShuffle] = React.useState(false);
+  const [repeat, setRepeat] = React.useState(RepeatState.Off);
 
   // returns time into string duration for slider
   function formatDuration(time: number | undefined): string {
@@ -67,7 +86,6 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
         >
           {selectedLink ? (
             <audio
-              controls
               autoPlay
               id={audioPlayerId}
               src={selectedLink}
@@ -139,7 +157,7 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            mt: 3,
+            mt: 2,
           }}
         >
           <IconButton>
@@ -204,9 +222,57 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
           />
           <VolumeUpRounded />
         </Stack>
+        <Stack
+          spacing={10}
+          direction="row"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mt: 3,
+          }}
+        >
+          <IconButton
+            onClick={() => setShuffle(!shuffle)}
+          >
+            {shuffle? <ShuffleOn /> : <Shuffle />}
+          </IconButton>
+          {/* <FormControl>
+            <SlowMotionVideo id="video-icon" />
+            <Select
+              labelId="video-icon"
+              value={speed}
+              onChange={(event) => {
+                const playbackSpeed = event.target.value as PlaybackSpeed;
+                fetchAudioPlayer(audioPlayerId).playbackRate = playbackSpeed;
+                setSpeed(playbackSpeed);
+              }}
+            >
+              {playbackSpeeds.map(playbackSpeed => <MenuItem value={playbackSpeed}>{playbackSpeed}</MenuItem>)}
+            </Select>
+          </FormControl> */}
+          <PlaybackSpeedButton speedHandler={(speed) => {
+            fetchAudioPlayer(audioPlayerId).playbackRate = speed;
+          }}/>
+          <IconButton
+            onClick={() => setRepeat((repeat + 1) % 3)}
+          >
+            {!repeat? <Repeat /> : (
+              repeat === RepeatState.On? <RepeatOn /> : <RepeatOneOn />
+            )}
+          </IconButton>
+        </Stack>
       </Box>
     </>
   );
 }
 
 export default AudioPlayer;
+
+/*
+  TODO: 
+    - shuffle, repeat, autoplay
+    - add different audio sources
+    - check audio source validity
+    - better error handling
+*/
