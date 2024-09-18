@@ -64,18 +64,15 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
     
   const audioPlayerId = "audio-player";
   const audioPlayerContainerId = "audio-player-container";
-  const [paused, setPaused] = React.useState(!!!selectedLink);
+  const [paused, setPaused] = React.useState(!selectedLink);
   const [muted, setMuted] = React.useState(false);
   const [position, setPosition] = React.useState<number>();
   const [endTime, setEndTime] = React.useState<number>();
   const [volume, setVolume] = React.useState<number>();
   const [shuffle, setShuffle] = React.useState(false);
   const [repeat, setRepeat] = React.useState(RepeatState.Off);
+  const [disabled, setDisabled] = React.useState(true);
   // const [audioVisualizer, setAudioVisualizer] = React.useState<AudioMotionAnalyzer>();
-
-  const audioVisualizer = new AudioMotionAnalyzer(document.getElementById(audioPlayerContainerId) ?? undefined, {
-    start: false
-  });
 
   return (
     <>
@@ -92,20 +89,21 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
         >
           {selectedLink ? (
             <audio
+              preload="auto"
               crossOrigin="anonymous"
               id={audioPlayerId}
-              src={selectedLink}
-              onPlay={() => setPaused(false)}
-              onPause={() => setPaused(true)}
+              src={`http://localhost:3001/audio/${encodeURIComponent(selectedLink)}`}
               onVolumeChange={(event) => {
                 setMuted(!event.currentTarget.volume ? true : event.currentTarget.muted);
               }}
               onDurationChange={(event) => {
                 setPosition(0);
+                setDisabled(false);
                 setEndTime(event.currentTarget.duration);
                 setVolume(event.currentTarget.volume);
-                audioVisualizer.connectInput(fetchAudioPlayer(audioPlayerId));
-                audioVisualizer.start();
+                const audioVisualizer = new AudioMotionAnalyzer(document.getElementById(audioPlayerContainerId) ?? undefined, {
+                  source: fetchAudioPlayer(audioPlayerId)
+                });
               }}
               onTimeUpdate={event => setPosition(event.currentTarget.currentTime)}
             ></audio>
@@ -145,7 +143,7 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             fetchAudioPlayer(audioPlayerId).currentTime = newPos;
           }} 
           sx={{ width: "60%", mt: 5 }}
-          disabled={[position, endTime].includes(undefined)}
+          disabled={disabled}
           max={endTime}
         />
         <Box
@@ -183,9 +181,16 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
               const audioPlayer = fetchAudioPlayer(audioPlayerId);
 
               if (paused) {
-                audioPlayer.play();
+                const playPromise = audioPlayer.play();
+
+                playPromise.then(_ => {
+                  setPaused(false);
+                }).catch(_ => {
+                  setPaused(true);
+                });
               } else {
                 audioPlayer.pause();
+                setPaused(true);
               }
             }}
           >
@@ -224,7 +229,7 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
               setVolume(newVolume);
               fetchAudioPlayer(audioPlayerId).volume = newVolume;
             }}
-            disabled={volume === undefined}
+            disabled={disabled}
             max={1}
             step={0.01}
           />
@@ -245,9 +250,12 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
           >
             {shuffle? <ShuffleOn /> : <Shuffle />}
           </IconButton>
-          <PlaybackSpeedButton speedHandler={(speed) => {
+          <PlaybackSpeedButton 
+            speedHandler={(speed) => {
             fetchAudioPlayer(audioPlayerId).playbackRate = speed;
-          }}/>
+            }} 
+            disabled={disabled}
+          />
           <IconButton
             onClick={() => setRepeat((repeat + 1) % 3)}
           >
@@ -265,9 +273,8 @@ export default AudioPlayer;
 
 /*
   TODO: 
-    - disable speed menu
-    - add visualization for audio
-    - fix resetting of audio player after deletion of file from playlist
+    - fix resetting of audio player after deletion of file from playlist (cleanup state when changing audio as well)
+    - disable logic
     - shuffle, repeat, autoplay
     - check audio source validity
     - add different audio sources

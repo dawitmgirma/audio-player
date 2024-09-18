@@ -7,9 +7,10 @@ type PlaybackSpeed = typeof playbackSpeeds[number];
 
 type PlaybackSpeedButtonProps = {
   speedHandler: (speed: PlaybackSpeed) => void;
+  disabled: boolean;
 };
 
-export default function PlaybackSpeedButton({ speedHandler }: PlaybackSpeedButtonProps) {
+export default function PlaybackSpeedButton({ speedHandler, disabled }: PlaybackSpeedButtonProps) {
   const [speed, setSpeed] = React.useState<PlaybackSpeed>(1);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -40,7 +41,7 @@ export default function PlaybackSpeedButton({ speedHandler }: PlaybackSpeedButto
         id="demo-positioned-menu"
         aria-labelledby="demo-positioned-button"
         anchorEl={anchorEl}
-        open={open}
+        open={open && !disabled}
         onClose={handleClose}
         anchorOrigin={{
           vertical: 'top',
