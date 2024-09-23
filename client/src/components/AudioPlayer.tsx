@@ -30,10 +30,20 @@ import {
 
 import PlaybackSpeedButton from "./PlaybackSpeedButton";
 import AudioMotionAnalyzer from 'audiomotion-analyzer';
+import { pageTheme } from "../assets/PageTheme";
 
 type AudioPlayerProps = {
   selectedLink: string | undefined;
 };
+
+type AudioControlState = {
+  paused: boolean,
+  muted: boolean,
+  position: number | undefined,
+  endTime: number | undefined,
+  volume: number | undefined,
+  audioVisualizer: AudioMotionAnalyzer | undefined
+}
 
 enum RepeatState {
   Off = 0,
@@ -61,52 +71,76 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
 
     return audioPlayer;
   }
-    
+
   const audioPlayerId = "audio-player";
   const audioPlayerContainerId = "audio-player-container";
-  const [paused, setPaused] = React.useState(!selectedLink);
-  const [muted, setMuted] = React.useState(false);
-  const [position, setPosition] = React.useState<number>();
-  const [endTime, setEndTime] = React.useState<number>();
-  const [volume, setVolume] = React.useState<number>();
+  const initialAudioControls: AudioControlState = {
+    paused: true,
+    muted: false,
+    position: undefined,
+    endTime: undefined,
+    volume: undefined,
+    audioVisualizer: undefined,
+  };
+  const [audioControls, setAudioControls] = React.useState(initialAudioControls);
   const [shuffle, setShuffle] = React.useState(false);
   const [repeat, setRepeat] = React.useState(RepeatState.Off);
-  const [disabled, setDisabled] = React.useState(true);
-  // const [audioVisualizer, setAudioVisualizer] = React.useState<AudioMotionAnalyzer>();
+  const [disabled, setDisabled] = React.useState(!selectedLink);
+
+  const disabledSx = {
+    "&.Mui-disabled": {
+      color: pageTheme.palette.action.active
+    }
+  }; // temporary until theme clean up
+
+  React.useEffect(() => {
+    if (!selectedLink) {
+      audioControls.audioVisualizer?.destroy();
+      setAudioControls(initialAudioControls);
+      setDisabled(true);
+    }
+  }, [selectedLink]);
 
   return (
     <>
       <Card sx={{ height: "50%" }}>
-        <CardMedia
+        {selectedLink ? (<div
           id={audioPlayerContainerId}
-          sx={{
+          style={{
             width: "100%",
             height: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-          }}
-        >
-          {selectedLink ? (
+          }}>
             <audio
               preload="auto"
               crossOrigin="anonymous"
               id={audioPlayerId}
               src={`http://localhost:3001/audio/${encodeURIComponent(selectedLink)}`}
+              onPause={() => setAudioControls({...audioControls, paused: true})}
+              onPlay={() => setAudioControls({...audioControls, paused: false})}
               onVolumeChange={(event) => {
-                setMuted(!event.currentTarget.volume ? true : event.currentTarget.muted);
-              }}
-              onDurationChange={(event) => {
-                setPosition(0);
-                setDisabled(false);
-                setEndTime(event.currentTarget.duration);
-                setVolume(event.currentTarget.volume);
-                const audioVisualizer = new AudioMotionAnalyzer(document.getElementById(audioPlayerContainerId) ?? undefined, {
-                  source: fetchAudioPlayer(audioPlayerId)
+                setAudioControls({
+                  ...audioControls,
+                  muted: !event.currentTarget.volume ? true : event.currentTarget.muted
                 });
               }}
-              onTimeUpdate={event => setPosition(event.currentTarget.currentTime)}
-            ></audio>
+              onDurationChange={(event) => {
+                setDisabled(false);
+                setAudioControls({
+                  ...audioControls,
+                  position: 0,
+                  endTime: event.currentTarget.duration,
+                  volume: event.currentTarget.volume,
+                  audioVisualizer: new AudioMotionAnalyzer(
+                    document.getElementById(audioPlayerContainerId) ?? undefined,
+                    { source: fetchAudioPlayer(audioPlayerId) }
+                  ),
+                });
+              }}
+              onTimeUpdate={event => setAudioControls({...audioControls, position: event.currentTarget.currentTime})}
+            ></audio></div>
           ) : (
             <div
               style={{
@@ -122,7 +156,6 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
               <Typography variant="h4">Add a link to play.</Typography>
             </div>
           )}
-        </CardMedia>
       </Card>
       <Box
         sx={{
@@ -135,16 +168,14 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
         <Slider
           size="small"
           valueLabelDisplay="off"
-          value={position ?? 0}
+          value={audioControls.position ?? 0}
           onChange={(_, value) => {
             const newPos = value as number; // will never have array since it is not ranged slider
-            setPosition(newPos);
-
             fetchAudioPlayer(audioPlayerId).currentTime = newPos;
           }} 
           sx={{ width: "60%", mt: 5 }}
           disabled={disabled}
-          max={endTime}
+          max={audioControls.endTime}
         />
         <Box
           sx={{
@@ -155,8 +186,8 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             mt: -1,
           }}
         >
-          <Typography fontSize="0.75rem">{formatDuration(position)}</Typography>
-          <Typography fontSize="0.75rem">{formatDuration(endTime)}</Typography>
+          <Typography fontSize="0.75rem">{formatDuration(audioControls.position)}</Typography>
+          <Typography fontSize="0.75rem">{formatDuration(audioControls.endTime)}</Typography>
         </Box>
         <Box
           sx={{
@@ -171,6 +202,8 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
           </IconButton>
           <IconButton
             onClick={() => fetchAudioPlayer(audioPlayerId).currentTime -= 10}
+            disabled={disabled}
+            sx={disabledSx}
           >
             <Replay10 sx={{ fontSize: "40px" }} />
           </IconButton>
@@ -180,21 +213,16 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
 
               const audioPlayer = fetchAudioPlayer(audioPlayerId);
 
-              if (paused) {
-                const playPromise = audioPlayer.play();
-
-                playPromise.then(_ => {
-                  setPaused(false);
-                }).catch(_ => {
-                  setPaused(true);
-                });
+              if (audioControls.paused) {
+                audioPlayer.play().catch(_ => audioPlayer.pause());
               } else {
                 audioPlayer.pause();
-                setPaused(true);
               }
             }}
+            disabled={disabled}
+            sx={disabledSx}
           >
-            {paused ? (
+            {audioControls.paused ? (
               <PlayArrowRounded sx={{ fontSize: "75px" }} />
             ) : (
               <PauseRounded sx={{ fontSize: "75px" }} />
@@ -202,6 +230,8 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
           </IconButton>
           <IconButton
             onClick={() => fetchAudioPlayer(audioPlayerId).currentTime += 10}
+            disabled={disabled}
+            sx={disabledSx}
           >
             <Forward10 sx={{ fontSize: "40px" }} />
           </IconButton>
@@ -219,14 +249,16 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
             onClick={() => {
               fetchAudioPlayer(audioPlayerId).muted = !fetchAudioPlayer(audioPlayerId).muted;
             }}
+            disabled={disabled}
+            sx={disabledSx}
           >
-            {muted ? <VolumeOff /> : <VolumeDownRounded />}
+            {audioControls.muted ? <VolumeOff /> : <VolumeDownRounded />}
           </IconButton>
           <Slider 
-            value={volume && !muted ? volume: 0}
+            value={audioControls.volume && !audioControls.muted ? audioControls.volume: 0}
             onChange={(_, value) => {
               const newVolume = value as number; // will never have array since it is not ranged slider
-              setVolume(newVolume);
+              setAudioControls({...audioControls, volume: newVolume});
               fetchAudioPlayer(audioPlayerId).volume = newVolume;
             }}
             disabled={disabled}
@@ -252,7 +284,7 @@ function AudioPlayer({ selectedLink }: AudioPlayerProps) {
           </IconButton>
           <PlaybackSpeedButton 
             speedHandler={(speed) => {
-            fetchAudioPlayer(audioPlayerId).playbackRate = speed;
+              fetchAudioPlayer(audioPlayerId).playbackRate = speed;
             }} 
             disabled={disabled}
           />
@@ -273,7 +305,6 @@ export default AudioPlayer;
 
 /*
   TODO: 
-    - fix resetting of audio player after deletion of file from playlist (cleanup state when changing audio as well)
     - disable logic
     - shuffle, repeat, autoplay
     - check audio source validity
